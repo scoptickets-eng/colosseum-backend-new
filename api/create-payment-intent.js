@@ -38,7 +38,7 @@ module.exports = async function handler(req, res) {
         email
       },
       receipt_email: email,
-      description: ⁠ Colosseum Tickets — ${ticket_type} — ${visit_date} ${time_slot} ⁠
+      description: 'Colosseum Tickets - ' + ticket_type + ' - ' + visit_date + ' ' + time_slot ⁠
     });
 
     return res.status(200).json({ clientSecret: paymentIntent.client_secret });
