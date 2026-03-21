@@ -7,17 +7,7 @@ module.exports = async function handler(req, res) {
 
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-  const {
-    ticket_type,
-    qty_adults,
-    qty_children,
-    qty_infants,
-    visit_date,
-    time_slot,
-    customer_name,
-    email,
-    amount
-  } = req.body;
+  const { ticket_type, qty_adults, qty_children, qty_infants, visit_date, time_slot, customer_name, email, amount } = req.body;
 
   if (!ticket_type || !email || !amount || !visit_date || !time_slot) {
     return res.status(400).json({ error: 'Faltan campos requeridos' });
@@ -28,17 +18,16 @@ module.exports = async function handler(req, res) {
       amount: Math.round(amount * 100),
       currency: 'eur',
       metadata: {
-        ticket_type,
+        ticket_type: ticket_type,
         qty_adults: String(qty_adults),
         qty_children: String(qty_children || 0),
         qty_infants: String(qty_infants || 0),
-        visit_date,
-        time_slot,
-        customer_name,
-        email
+        visit_date: visit_date,
+        time_slot: time_slot,
+        customer_name: customer_name,
+        email: email
       },
-      receipt_email: email,
-      description: 'Colosseum Tickets - ' + ticket_type + ' - ' + visit_date + ' ' + time_slot ⁠
+      receipt_email: email
     });
 
     return res.status(200).json({ clientSecret: paymentIntent.client_secret });
