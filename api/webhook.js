@@ -3,8 +3,6 @@ const { createClient } = require('@supabase/supabase-js');
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, stripe-signature');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -20,12 +18,20 @@ module.exports = async function handler(req, res) {
     process.env.SUPABASE_SERVICE_ROLE_KEY
   );
 
+  // Leer el raw body manualmente
+  const rawBody = await new Promise((resolve, reject) => {
+    let data = '';
+    req.on('data', chunk => { data += chunk; });
+    req.on('end', () => resolve(data));
+    req.on('error', reject);
+  });
+
   const sig = req.headers['stripe-signature'];
   let event;
 
   try {
     event = stripe.webhooks.constructEvent(
-      req.body,
+      rawBody,
       sig,
       process.env.STRIPE_WEBHOOK_SECRET
     );
@@ -79,7 +85,7 @@ module.exports = async function handler(req, res) {
       qty_adults: parseInt(meta.qty_adults),
       qty_children: parseInt(meta.qty_children || 0),
       qty_infants: parseInt(meta.qty_infants || 0),
-      visit_date: meta.visit_date,
+      visit_date: meta.visit_date.split('/').reverse().join('-'),
       time_slot: meta.time_slot,
       amount_total: paymentIntent.amount / 100,
       currency: paymentIntent.currency,
