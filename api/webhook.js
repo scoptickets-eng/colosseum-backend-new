@@ -57,26 +57,23 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ received: true, duplicate: true });
     }
 
-let customerId;
-    const { data: existingCustomer } = await supabase
+// Insertar o actualizar customer
+    const { error: upsertError } = await supabase
+      .from('customers')
+      .upsert({ email: meta.email, name: meta.customer_name }, { onConflict: 'email' });
+
+    if (upsertError) {
+      console.error('Upsert error:', upsertError);
+    }
+
+    const { data: customer } = await supabase
       .from('customers')
       .select('id')
       .eq('email', meta.email)
       .maybeSingle();
 
-    if (existingCustomer) {
-      customerId = existingCustomer.id;
-    } else {
-      const { data: newCustomer } = await supabase
-        .from('customers')
-        .insert({
-          email: meta.email,
-          name: meta.customer_name
-        })
-        .select('id')
-        .single();
-      customerId = newCustomer.id;
-    }
+    const customerId = customer ? customer.id : null;
+  }
 
     await supabase.from('orders').insert({
       customer_id: customerId,
