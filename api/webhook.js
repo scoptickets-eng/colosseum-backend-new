@@ -57,12 +57,12 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ received: true, duplicate: true });
     }
 
-    let customerId;
+let customerId;
     const { data: existingCustomer } = await supabase
       .from('customers')
       .select('id')
       .eq('email', meta.email)
-      .single();
+      .maybeSingle();
 
     if (existingCustomer) {
       customerId = existingCustomer.id;
