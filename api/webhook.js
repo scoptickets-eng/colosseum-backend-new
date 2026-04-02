@@ -84,8 +84,26 @@ module.exports = async function handler(req, res) {
       return res.status(500).json({ error: orderError.message });
     }
 
-    return res.status(200).json({ received: true });
+// Actualizar availability
+    const { data: slotData } = await supabase
+      .from('availability')
+      .select('id, booked, capacity')
+      .eq('date', visitDate)
+      .eq('time_slot', meta.time_slot)
+      .eq('ticket_type', meta.ticket_type)
+      .maybeSingle();
 
+    if (slotData) {
+      const totalTickets = parseInt(meta.qty_adults) + parseInt(meta.qty_children || 0);
+      await supabase
+        .from('availability')
+        .update({ booked: slotData.booked + totalTickets })
+        .eq('id', slotData.id);
+    } else {
+      console.log('Slot no encontrado:', visitDate, meta.time_slot, meta.ticket_type);
+    }
+
+    return res.status(200).json({ received: true });
   } catch (err) {
     console.error('Error:', err);
     return res.status(500).json({ error: err.message });
